@@ -1,0 +1,19 @@
+name: frontend-ci
+
+on:
+  push:
+    paths:
+      - "dashboard/**"
+      - "overlay/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    paths:
+      - "dashboard/**"
+      - "overlay/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Frontend scaffold validation runs in Phase 2."

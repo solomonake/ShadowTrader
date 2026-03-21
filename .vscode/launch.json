@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "cwd": "${workspaceFolder}/backend",
+      "args": ["app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    },
+    {
+      "name": "Pytest",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "cwd": "${workspaceFolder}/backend",
+      "args": ["-v", "--tb=short"]
+    },
+    {
+      "name": "Celery Worker",
+      "type": "python",
+      "request": "launch",
+      "module": "celery",
+      "cwd": "${workspaceFolder}/backend",
+      "args": ["-A", "app.celery_app", "worker", "--loglevel=info"]
+    },
+    {
+      "name": "Celery Beat",
+      "type": "python",
+      "request": "launch",
+      "module": "celery",
+      "cwd": "${workspaceFolder}/backend",
+      "args": ["-A", "app.celery_app", "beat", "--loglevel=info"]
+    }
+  ]
+}

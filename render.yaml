@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: shadowtrader-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+
+  - type: worker
+    name: shadowtrader-celery-worker
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.celery_app worker --loglevel=info
+    plan: starter
+
+  - type: worker
+    name: shadowtrader-celery-beat
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.celery_app beat --loglevel=info
+    plan: starter

@@ -1,0 +1,36 @@
+.DS_Store
+
+# Secrets and local env files
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Python
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+**/.pytest_cache/
+.venv/
+**/.venv/
+venv/
+*.py[cod]
+*.egg-info/
+**/*.egg-info/
+celerybeat-schedule*
+**/celerybeat-schedule*
+
+# JavaScript
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-electron/
+**/dist-electron/
+dist-renderer/
+**/dist-renderer/
+
+# Editor and OS
+.vscode/*.log

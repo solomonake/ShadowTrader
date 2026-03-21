@@ -1,0 +1,1 @@
+"""ShadowTrader backend application package."""
