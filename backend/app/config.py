@@ -1,8 +1,10 @@
 """Application configuration."""
 
 from functools import lru_cache
+import secrets
 
-from pydantic import Field
+from cryptography.fernet import Fernet
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,11 +16,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://shadowtrader:shadowtrader@localhost:5432/shadowtrader"
     redis_url: str = "redis://localhost:6379/0"
     environment: str = "development"
-    secret_key: str = Field(
-        default="0123456789ABCDEF0123456789ABCDEF",
-        min_length=32,
-    )
-    fernet_key: str = "m4LzMNNrI4O6mPcJ9g2w8m3S71j7hXj8MOnK3S7nM9w="
+    secret_key: str | None = None
+    fernet_key: str | None = None
     alpaca_api_key: str | None = None
     alpaca_secret_key: str | None = None
     alpaca_base_url: str = "https://paper-api.alpaca.markets"
@@ -46,6 +45,34 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
+
+    @model_validator(mode="after")
+    def validate_runtime_secrets(self) -> "Settings":
+        """Require env-backed secrets outside dev and validate key formats."""
+
+        dev_mode = self.environment == "development" or self.auth_mode == "dev"
+
+        if not self.secret_key:
+            if dev_mode:
+                self.secret_key = secrets.token_urlsafe(48)
+            else:
+                raise ValueError("SECRET_KEY must be set.")
+        if len(self.secret_key) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters.")
+
+        if not self.fernet_key:
+            if dev_mode:
+                # Development-only fallback. Production must inject FERNET_KEY explicitly.
+                self.fernet_key = Fernet.generate_key().decode()
+            else:
+                raise ValueError("FERNET_KEY must be set.")
+
+        try:
+            Fernet(self.fernet_key.encode())
+        except Exception as exc:
+            raise ValueError("FERNET_KEY must be a valid Fernet key.") from exc
+
+        return self
 
 
 @lru_cache(maxsize=1)
