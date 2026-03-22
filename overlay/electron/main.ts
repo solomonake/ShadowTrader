@@ -58,8 +58,8 @@ async function bootstrap(): Promise<void> {
   overlayWindow.showInactive();
 }
 
-app.on("window-all-closed", (event: Electron.Event) => {
-  event.preventDefault();
+app.on("window-all-closed", () => {
+  // Keep the background tray app alive; quitting is handled explicitly.
 });
 
 app.on("activate", () => {

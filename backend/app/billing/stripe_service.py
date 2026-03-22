@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -86,7 +87,8 @@ class StripeService:
         if not price_id:
             raise RuntimeError("Stripe price is not configured for that plan.")
 
-        checkout = stripe.checkout.Session.create(
+        checkout = await asyncio.to_thread(
+            stripe.checkout.Session.create,
             mode="subscription",
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=f"{self.settings.frontend_url}/billing?checkout=success",
@@ -107,7 +109,8 @@ class StripeService:
         import stripe
 
         stripe.api_key = self.settings.stripe_secret_key
-        session = stripe.billing_portal.Session.create(
+        session = await asyncio.to_thread(
+            stripe.billing_portal.Session.create,
             customer=subscription.stripe_customer_id,
             return_url=f"{self.settings.frontend_url}/billing",
         )

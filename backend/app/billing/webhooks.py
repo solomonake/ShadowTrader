@@ -23,27 +23,37 @@ async def billing_status(
     return await StripeService(session).get_subscription_status(user_id)
 
 
-@router.post("/checkout", response_model=CheckoutResponse)
+@router.post("/checkout", response_model=CheckoutResponse, responses={503: {}})
 async def create_checkout(
     payload: CheckoutRequest,
     user_id=Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db_session),
-) -> CheckoutResponse:
+):
     """Create a Stripe checkout session."""
 
-    url = await StripeService(session).create_checkout_session(user_id, payload.tier, payload.interval)
-    return CheckoutResponse(checkout_url=url)
+    try:
+        url = await StripeService(session).create_checkout_session(user_id, payload.tier, payload.interval)
+        return CheckoutResponse(checkout_url=url)
+    except RuntimeError as exc:
+        return JSONResponse(status_code=503, content={"error": str(exc)})
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={"error": f"Stripe error: {exc}"})
 
 
-@router.post("/portal", response_model=PortalResponse)
+@router.post("/portal", response_model=PortalResponse, responses={503: {}})
 async def create_portal(
     user_id=Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db_session),
-) -> PortalResponse:
+):
     """Create a Stripe customer portal session."""
 
-    url = await StripeService(session).create_portal_session(user_id)
-    return PortalResponse(portal_url=url)
+    try:
+        url = await StripeService(session).create_portal_session(user_id)
+        return PortalResponse(portal_url=url)
+    except RuntimeError as exc:
+        return JSONResponse(status_code=503, content={"error": str(exc)})
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={"error": f"Stripe error: {exc}"})
 
 
 @router.post("/webhook")

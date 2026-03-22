@@ -10,6 +10,7 @@ import { LoginPage } from "./auth/LoginPage";
 import { Onboarding } from "./pages/Onboarding";
 import { RuleBuilder } from "./pages/RuleBuilder";
 import { SessionReview } from "./pages/SessionReview";
+import { Profile } from "./pages/Profile";
 import { Settings } from "./pages/Settings";
 import { SignupPage } from "./auth/SignupPage";
 
@@ -27,6 +28,7 @@ export function App(): JSX.Element {
         <Route path="/score" element={<DisciplineScore />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/billing" element={<Billing />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

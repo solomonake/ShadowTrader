@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     alpaca_secret_key: str | None = None
     alpaca_base_url: str = "https://paper-api.alpaca.markets"
     anthropic_api_key: str | None = None
-    anthropic_model: str = "claude-sonnet-4-20250514"
+    anthropic_model: str = "claude-sonnet-4-6"
     auth_mode: str = "dev"
     supabase_url: str | None = None
     supabase_anon_key: str | None = None
