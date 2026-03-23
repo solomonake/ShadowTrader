@@ -1,7 +1,9 @@
 import type { RuleType } from "./types";
 
-export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-export const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:8000/ws/alerts";
+// Empty string = relative URL, so requests stay same-origin and get proxied by vercel.json.
+// In local dev, set VITE_API_URL=http://localhost:8000 in dashboard/.env.local
+export const API_URL = import.meta.env.VITE_API_URL ?? "";
+export const WS_URL = import.meta.env.VITE_WS_URL ?? "/ws/alerts";
 export const USER_ID = "00000000-0000-0000-0000-000000000001";
 export const AUTH_MODE = import.meta.env.VITE_AUTH_MODE ?? "dev";
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";

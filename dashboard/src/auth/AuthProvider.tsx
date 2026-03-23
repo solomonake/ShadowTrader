@@ -50,6 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       if (session?.user) {
         window.localStorage.setItem("shadowtrader-access-token", session.access_token);
         setUser({ id: session.user.id, email: session.user.email ?? null });
+        // Sync onboarded flag from Supabase user metadata so it persists across browsers
+        if (session.user.user_metadata?.onboarded) {
+          window.localStorage.setItem("shadowtrader-onboarding-complete", "true");
+          setIsOnboarded(true);
+        }
       } else {
         setUser(null);
       }
@@ -59,6 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
         if (nextSession?.user) {
           window.localStorage.setItem("shadowtrader-access-token", nextSession.access_token);
           setUser({ id: nextSession.user.id, email: nextSession.user.email ?? null });
+          if (nextSession.user.user_metadata?.onboarded) {
+            window.localStorage.setItem("shadowtrader-onboarding-complete", "true");
+            setIsOnboarded(true);
+          }
         } else {
           window.localStorage.removeItem("shadowtrader-access-token");
           setUser(null);
@@ -104,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
         const { error } = await supabaseClient.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/onboarding`,
+            redirectTo: `${window.location.origin}/app`,
           },
         });
         if (error) {
@@ -123,6 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       completeOnboarding() {
         window.localStorage.setItem("shadowtrader-onboarding-complete", "true");
         setIsOnboarded(true);
+        // Persist to Supabase metadata so returning users on new devices skip onboarding
+        if (supabaseClient) {
+          void supabaseClient.auth.updateUser({ data: { onboarded: true } });
+        }
       },
     }),
     [user, loading, isOnboarded, supabaseClient],
