@@ -30,7 +30,10 @@ class Base(DeclarativeBase):
 
 
 settings = get_settings()
-engine: AsyncEngine = create_async_engine(settings.database_url, echo=False, future=True)
+# Railway (and some other hosts) inject DATABASE_URL as `postgresql://` without a driver
+# specifier. SQLAlchemy async requires the `+asyncpg` dialect suffix.
+_db_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+engine: AsyncEngine = create_async_engine(_db_url, echo=False, future=True)
 AsyncSessionLocal = async_sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 

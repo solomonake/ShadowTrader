@@ -12,7 +12,9 @@ from app.database import Base
 from app.models import baseline, broker_connection, chat_message, pattern_alert, rule, session, subscription, trade, user, violation  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+# Normalize Railway / plain postgres URLs to the asyncpg dialect required by async Alembic.
+_raw_url = get_settings().database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+config.set_main_option("sqlalchemy.url", _raw_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
