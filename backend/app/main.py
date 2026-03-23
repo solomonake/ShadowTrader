@@ -82,6 +82,13 @@ async def _load_saved_broker_connection(
         return connection
 
 
+def _startup_tracker_bootstrap_enabled() -> bool:
+    """Return whether the dev polling bootstrap should run."""
+
+    settings = get_settings()
+    return settings.environment == "development" or settings.auth_mode == "dev"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Attach shared runtime state and start the broker polling loop."""
@@ -124,32 +131,39 @@ async def lifespan(app: FastAPI):
             len(user_rules),
         )
 
-    saved_connection = await _load_saved_broker_connection(_TEST_USER_ID, fernet)
-    if saved_connection is not None:
+    if _startup_tracker_bootstrap_enabled():
         try:
-            await _start_tracker_for_connection(
-                broker_name=saved_connection.broker,
-                credentials=saved_connection.credentials,
-                is_paper=saved_connection.is_paper,
-            )
+            saved_connection = await _load_saved_broker_connection(_TEST_USER_ID, fernet)
         except Exception as exc:
-            print(f"[ShadowTrader] ERROR: Could not start saved broker polling loop: {exc}", flush=True)
-            logger.warning("Could not start saved broker polling loop: %s", exc)
+            saved_connection = None
+            print(f"[ShadowTrader] ERROR: Could not load saved broker connection: {exc}", flush=True)
+            logger.warning("Could not load saved broker connection: %s", exc)
 
-    if poll_task is None and settings.alpaca_api_key and settings.alpaca_secret_key:
-        try:
-            await _start_tracker_for_connection(
-                broker_name="alpaca",
-                credentials={
-                    "api_key": settings.alpaca_api_key,
-                    "api_secret": settings.alpaca_secret_key,
-                    "paper": True,
-                },
-                is_paper=True,
-            )
-        except Exception as exc:
-            print(f"[ShadowTrader] ERROR: Could not start Alpaca polling loop: {exc}", flush=True)
-            logger.warning("Could not start Alpaca polling loop: %s", exc)
+        if saved_connection is not None:
+            try:
+                await _start_tracker_for_connection(
+                    broker_name=saved_connection.broker,
+                    credentials=saved_connection.credentials,
+                    is_paper=saved_connection.is_paper,
+                )
+            except Exception as exc:
+                print(f"[ShadowTrader] ERROR: Could not start saved broker polling loop: {exc}", flush=True)
+                logger.warning("Could not start saved broker polling loop: %s", exc)
+
+        if poll_task is None and settings.alpaca_api_key and settings.alpaca_secret_key:
+            try:
+                await _start_tracker_for_connection(
+                    broker_name="alpaca",
+                    credentials={
+                        "api_key": settings.alpaca_api_key,
+                        "api_secret": settings.alpaca_secret_key,
+                        "paper": True,
+                    },
+                    is_paper=True,
+                )
+            except Exception as exc:
+                print(f"[ShadowTrader] ERROR: Could not start Alpaca polling loop: {exc}", flush=True)
+                logger.warning("Could not start Alpaca polling loop: %s", exc)
 
     yield
 
