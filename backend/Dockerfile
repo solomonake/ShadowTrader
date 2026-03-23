@@ -7,7 +7,12 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir . \
+    && addgroup --system app \
+    && adduser --system --ingroup app app \
+    && chown -R app:app /app
+
+USER app
 
 EXPOSE 8000
 
