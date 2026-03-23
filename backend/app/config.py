@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     stripe_price_pro_monthly: str | None = None
     stripe_price_pro_yearly: str | None = None
     frontend_url: str = "http://localhost:5173"
+    cors_allowed_origins: str | None = None
     app_version: str = "1.0.0"
     default_user_timezone: str = "UTC"
     session_poll_interval_seconds: float = 5.0
@@ -73,6 +74,22 @@ class Settings(BaseSettings):
             raise ValueError("FERNET_KEY must be a valid Fernet key.") from exc
 
         return self
+
+    def get_cors_origins(self) -> list[str]:
+        """Return the allowed CORS origins for the API."""
+
+        origins = {
+            "http://localhost:5173",
+            "http://localhost:5174",
+            self.frontend_url.rstrip("/"),
+        }
+        if self.cors_allowed_origins:
+            origins.update(
+                origin.strip().rstrip("/")
+                for origin in self.cors_allowed_origins.split(",")
+                if origin.strip()
+            )
+        return sorted(origins)
 
 
 @lru_cache(maxsize=1)
