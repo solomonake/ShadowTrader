@@ -185,7 +185,14 @@ def create_app() -> FastAPI:
         allow_origins=settings.get_cors_origins(),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "X-User-Id",
+        ],
     )
     app.include_router(auth.router, prefix=settings.api_prefix)
     app.include_router(billing_router, prefix=settings.api_prefix)
@@ -198,23 +205,36 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict:
-        """Return a health response."""
+        """Return a fast readiness response for load balancers."""
 
+        return {
+            "status": "ok",
+            "version": settings.app_version,
+        }
+
+    @app.get("/health/dependencies")
+    async def dependency_health() -> dict:
+        """Return dependency-level health details for diagnostics."""
+
+        dependency_timeout_seconds = 1.0
         database_ok = False
         redis_ok = False
         broker_connected = False
         celery_worker_ok = False
 
         try:
-            async with AsyncSessionLocal() as session:
-                await session.execute(text("SELECT 1"))
+            async def _check_database() -> None:
+                async with AsyncSessionLocal() as session:
+                    await session.execute(text("SELECT 1"))
+
+            await asyncio.wait_for(_check_database(), timeout=dependency_timeout_seconds)
             database_ok = True
         except Exception:
             database_ok = False
 
         try:
             redis_client = redis_from_url(settings.redis_url)
-            redis_ok = bool(await redis_client.ping())
+            redis_ok = bool(await asyncio.wait_for(redis_client.ping(), timeout=dependency_timeout_seconds))
             await redis_client.close()
         except Exception:
             redis_ok = False
@@ -226,8 +246,11 @@ def create_app() -> FastAPI:
             broker_connected = False
 
         try:
-            inspector = celery_app.control.inspect()
-            pings = await asyncio.to_thread(inspector.ping)
+            inspector = celery_app.control.inspect(timeout=dependency_timeout_seconds)
+            pings = await asyncio.wait_for(
+                asyncio.to_thread(inspector.ping),
+                timeout=dependency_timeout_seconds,
+            )
             celery_worker_ok = bool(pings)
         except Exception:
             celery_worker_ok = False
