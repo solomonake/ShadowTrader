@@ -10,7 +10,10 @@ COPY alembic.ini ./
 RUN pip install --no-cache-dir . \
     && addgroup --system app \
     && adduser --system --ingroup app app \
+    && mkdir -p /app/.runtime \
     && chown -R app:app /app
+
+ENV XDG_RUNTIME_DIR=/app/.runtime
 
 USER app
 
